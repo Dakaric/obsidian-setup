@@ -31,7 +31,7 @@ def known_vaults(ctx: Context) -> list[Path]:
 
 
 def process_output(command: list[str]) -> subprocess.CompletedProcess:
-    return subprocess.run(command, capture_output=True, text=True, errors="replace", check=False)
+    return subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
 
 
 def is_running(ctx: Context) -> bool:

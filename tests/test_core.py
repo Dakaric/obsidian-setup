@@ -1,5 +1,5 @@
 import subprocess
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from types import SimpleNamespace
 
 import pytest
@@ -52,8 +52,8 @@ def test_backup_names_copy_with_timestamp(tmp_path):
 def test_backup_directory(tmp_path):
     folder = tmp_path / ".obsidian"
     folder.mkdir()
-    (folder / "own").write_text("keep")
-    assert (fsutil.backup(folder) / "own").read_text() == "keep"
+    (folder / "own").write_text("Grüße", encoding="utf-8")
+    assert (fsutil.backup(folder) / "own").read_text(encoding="utf-8") == "Grüße"
 
 
 def test_safe_rmtree_refuses_outside_root(tmp_path):
@@ -127,14 +127,16 @@ def test_summary_deduplicates_and_numbers_next_steps(capsys):
         "  1. Öffnen", "  2. Aktivieren", "  3. Anmelden"]
 
 
-def test_shell_preserves_argument_boundaries(ctx, monkeypatch):
+@pytest.mark.parametrize("path_type", [Path, PureWindowsPath])
+def test_shell_preserves_argument_boundaries(path_type, ctx, monkeypatch):
     calls = []
     def execute(cmd, **kwargs):
         calls.append((cmd, kwargs))
         return subprocess.CompletedProcess(cmd, 0, "", "")
     monkeypatch.setattr(subprocess, "run", execute)
-    shell.run(["tool", str(ctx.home / "Mein Vault/07 Anhänge")], ctx)
-    assert calls[0][0][1].endswith("Mein Vault/07 Anhänge")
+    vault_path = str(path_type(ctx.home) / "Mein Vault" / "07 Anhänge")
+    shell.run(["tool", vault_path], ctx)
+    assert calls[0][0] == ["tool", vault_path]
     assert not calls[0][1].get("shell", False)
     ctx.dry_run = True
     assert shell.run(["tool"], ctx) is None

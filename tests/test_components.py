@@ -1,5 +1,6 @@
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -32,7 +33,7 @@ def fake_downloads(monkeypatch):
     def theme(name, target):
         target.mkdir(parents=True, exist_ok=True)
         fsutil.write_json(target / "manifest.json", {"name": name})
-        (target / "theme.css").write_text("body {}")
+        (target / "theme.css").write_text("body {}", encoding="utf-8")
     monkeypatch.setattr(registry, "download_plugin", plugin)
     monkeypatch.setattr(registry, "download_theme", theme)
 
@@ -47,7 +48,7 @@ def test_paths_with_spaces_and_umlauts(ctx):
 
 def test_existing_nonempty_vault_gets_no_folders(ctx):
     root(ctx).mkdir()
-    (root(ctx) / "Notiz.md").write_text("bleibt")
+    (root(ctx) / "Notiz.md").write_text("bleibt", encoding="utf-8")
     vault.apply(ctx)
     assert list(root(ctx).iterdir()) == [root(ctx) / "Notiz.md"]
 
@@ -237,7 +238,10 @@ def test_corrupt_json_is_not_replaced(ctx):
     assert (folder / "app.json").read_text(encoding="utf-8") == "kein JSON"
 
 
-def test_full_install_is_repeatable(ctx, fake_downloads, monkeypatch):
+@pytest.mark.parametrize("platform_name", ["macos", "linux", "windows"])
+def test_full_install_is_repeatable(platform_name, ctx, fake_downloads, monkeypatch):
+    ctx.platform = platform_name
+    monkeypatch.setattr("installer.platform.detect", lambda: platform_name)
     monkeypatch.setattr(Path, "home", lambda: ctx.home)
     args = ["--yes", "--vault", str(root(ctx))]
     assert cli.main(args) == 0
@@ -251,6 +255,17 @@ def test_full_install_is_repeatable(ctx, fake_downloads, monkeypatch):
     assert not list(root(ctx).glob(".obsidian.sicherung-*"))
     backups = cache_dir("obsidian-setup", ctx) / "backups" / root(ctx).name
     assert len(list(backups.glob(".obsidian.sicherung-*"))) == 1
+
+
+def test_process_output_reads_utf8_independent_of_locale(monkeypatch):
+    monkeypatch.setattr("locale.getencoding", lambda: "cp1252")
+    command = [sys.executable, "-c",
+               "import sys; sys.stdout.buffer.write('Anhänge'.encode('utf-8')); "
+               "sys.stderr.buffer.write('Prüfung'.encode('utf-8'))"]
+    result = obsidian.process_output(command)
+    assert result.returncode == 0
+    assert result.stdout == "Anhänge"
+    assert result.stderr == "Prüfung"
 
 
 @pytest.mark.parametrize("name", ["windows", "linux"])

@@ -14,8 +14,8 @@ OWNER = "Daka" + "ric"
 
 
 def files():
-    result = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"], cwd=ROOT, capture_output=True, check=True)
-    paths = [ROOT / name.decode() for name in result.stdout.split(b"\0") if name and name != b"uv.lock"]
+    result = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"], cwd=ROOT, capture_output=True, check=True, encoding="utf-8")
+    paths = [ROOT / name for name in result.stdout.split("\0") if name and name != "uv.lock"]
     assert paths
     return paths
 
