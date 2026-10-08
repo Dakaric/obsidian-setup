@@ -1,0 +1,1 @@
+"""Einrichtung eines Obsidian-Vaults."""

@@ -1,0 +1,6 @@
+/* Daily Notes: Sidebar-Ordnerfarbe auf Magenta (#f03ffd) statt AnuPpuccin Rainbow-Teal.
+   Passend zur Graph-Gruppe "05 Daily Notes". Setzt nur die Theme-Variable um,
+   die Rainbow-Mechanik (Hintergrund-Opacity, invertierter Text) bleibt erhalten. */
+.workspace .nav-folder:has(> .nav-folder-title[data-path="05 Daily Notes"]) {
+  --rainbow-folder-color: 240, 63, 253;
+}

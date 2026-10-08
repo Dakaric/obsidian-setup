@@ -1,0 +1,13 @@
+[project]
+name = "obsidian-setup"
+version = "1.0.0"
+description = "Einrichtung eines Obsidian-Vaults"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest>=8,<10"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
